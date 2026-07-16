@@ -201,7 +201,19 @@ RUN /app/docker/apt-install.sh \
       libsasl2-modules-gssapi-mit \
       libpq-dev \
       libecpg-dev \
-      libldap2-dev
+      libldap2-dev \
+      unixodbc \
+      unixodbc-dev
+
+# Install SAP SQL Anywhere Client if installer is present or URL is provided
+ARG SQLANY_INSTALLER_URL=""
+COPY .dockerignore sqla* /tmp/sqlanywhere/
+RUN /app/docker/install-sqlanywhere.sh && rm -rf /tmp/sqlanywhere
+
+# Set environment variables for SQL Anywhere client libraries
+ENV SQLANY=/opt/sqlanywhere
+ENV PATH=$PATH:$SQLANY/bin64:$SQLANY/bin32
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SQLANY/lib64:$SQLANY/lib32
 
 # Create data directory for DuckDB examples database
 # The database file will be created at runtime when examples are loaded from Parquet files

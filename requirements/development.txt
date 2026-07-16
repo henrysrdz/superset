@@ -62,8 +62,6 @@ backoff==2.2.1
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-backports-tarfile==1.2.0
-    # via jaraco-context
 bcrypt==4.3.0
     # via
     #   -c requirements/base-constraint.txt
@@ -123,7 +121,9 @@ cffi==2.0.0
     # via
     #   -c requirements/base-constraint.txt
     #   cryptography
+    #   gevent
     #   pynacl
+    #   trio
 cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.4.2
@@ -165,7 +165,11 @@ colorama==0.4.6
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
+    #   click
     #   flask-appbuilder
+    #   pylint
+    #   pytest
+    #   tqdm
 contourpy==1.0.7
     # via matplotlib
 coverage==7.6.8
@@ -188,7 +192,6 @@ cryptography==49.0.0
     #   paramiko
     #   pyjwt
     #   pyopenssl
-    #   secretstorage
 cycler==0.12.1
     # via matplotlib
 cyclopts==4.2.4
@@ -393,10 +396,6 @@ grpcio==1.81.1
     #   grpcio-status
 grpcio-status==1.60.1
     # via google-api-core
-gunicorn==26.0.0
-    # via
-    #   -c requirements/base-constraint.txt
-    #   apache-superset
 h11==0.16.0
     # via
     #   -c requirements/base-constraint.txt
@@ -436,9 +435,7 @@ idna==3.15
     #   trio
     #   url-normalize
 importlib-metadata==8.7.0
-    # via
-    #   keyring
-    #   opentelemetry-api
+    # via opentelemetry-api
 importlib-resources==6.5.2
     # via prophet
 iniconfig==2.0.0
@@ -461,10 +458,6 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.3.0
     # via keyring
-jeepney==0.9.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.6
     # via
     #   -c requirements/base-constraint.txt
@@ -634,7 +627,6 @@ packaging==25.0
     #   duckdb-engine
     #   fastmcp-slim
     #   google-cloud-bigquery
-    #   gunicorn
     #   kombu
     #   limits
     #   matplotlib
@@ -858,6 +850,12 @@ pytz==2025.2
     #   flask-babel
     #   pandas
     #   trino
+pywin32==312
+    # via
+    #   docker
+    #   mcp
+pywin32-ctypes==0.2.3
+    # via keyring
 pyxlsb==1.0.10
     # via
     #   -c requirements/base-constraint.txt
@@ -928,8 +926,6 @@ ruff==0.9.7
     # via apache-superset
 s3transfer==0.16.0
     # via boto3
-secretstorage==3.5.0
-    # via keyring
 selenium==4.45.0
     # via
     #   -c requirements/base-constraint.txt
@@ -992,12 +988,21 @@ sqlalchemy-continuum==1.6.0
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
+sqlalchemy-sqlany==1.0.4
+    # via
+    #   -c requirements/base-constraint.txt
+    #   apache-superset
 sqlalchemy-utils==0.42.1
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
     #   apache-superset-core
     #   flask-appbuilder
+sqlanydb==1.0.14
+    # via
+    #   -c requirements/base-constraint.txt
+    #   apache-superset
+    #   sqlalchemy-sqlany
 sqlglot==30.12.0
     # via
     #   -c requirements/base-constraint.txt
@@ -1078,6 +1083,7 @@ tzdata==2025.2
     #   -c requirements/base-constraint.txt
     #   kombu
     #   pandas
+    #   tzlocal
 tzlocal==5.4.4
     # via
     #   -c requirements/base-constraint.txt
@@ -1109,6 +1115,10 @@ vine==5.1.0
     #   kombu
 virtualenv==20.36.1
     # via pre-commit
+waitress==3.0.2
+    # via
+    #   -c requirements/base-constraint.txt
+    #   apache-superset
 watchdog==6.0.0
     # via
     #   -c requirements/base-constraint.txt

@@ -226,21 +226,34 @@ class ExecuteSqlCommand(BaseCommand):
 
     def _set_query_limit(self, rendered_query: str) -> None:
         db_engine_spec = self._execution_context.database.db_engine_spec  # type: ignore
-        limits = [
-            db_engine_spec.get_limit_from_sql(rendered_query),
-            self._execution_context.limit,
-        ]
-        if limits[0] is None or limits[0] > limits[1]:  # type: ignore
-            self._execution_context.query.limiting_factor = LimitingFactor.DROPDOWN
-        elif limits[1] > limits[0]:  # type: ignore
+        sql_limit = db_engine_spec.get_limit_from_sql(rendered_query)
+        dropdown_limit: int | None = self._execution_context.limit
+
+        # Treat 0 or None dropdown limit as unlimited
+        dropdown_limit = dropdown_limit if dropdown_limit not in (0, None) else None
+
+        if sql_limit is not None and dropdown_limit is not None:
+            # Both limits are present, safe to compare
+            if sql_limit > dropdown_limit:
+                self._execution_context.query.limiting_factor = LimitingFactor.DROPDOWN
+                self._execution_context.query.limit = dropdown_limit
+            elif dropdown_limit > sql_limit:
+                self._execution_context.query.limiting_factor = LimitingFactor.QUERY
+                self._execution_context.query.limit = sql_limit
+            else:
+                self._execution_context.query.limiting_factor = (
+                    LimitingFactor.QUERY_AND_DROPDOWN
+                )
+                self._execution_context.query.limit = sql_limit
+        elif sql_limit is not None:
             self._execution_context.query.limiting_factor = LimitingFactor.QUERY
-        else:  # limits[0] == limits[1]
-            self._execution_context.query.limiting_factor = (
-                LimitingFactor.QUERY_AND_DROPDOWN
-            )
-        self._execution_context.query.limit = min(
-            lim for lim in limits if lim is not None
-        )
+            self._execution_context.query.limit = sql_limit
+        elif dropdown_limit is not None:
+            self._execution_context.query.limiting_factor = LimitingFactor.DROPDOWN
+            self._execution_context.query.limit = dropdown_limit
+        else:
+            self._execution_context.query.limiting_factor = LimitingFactor.NOT_LIMITED
+            self._execution_context.query.limit = None
 
 
 class CanAccessQueryValidator:

@@ -299,9 +299,9 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
                     query.id,
                     str(query.to_dict()),
                 )
-                increased_limit = None if query.limit is None else query.limit + 1
+                increased_limit = None if not query.limit else query.limit + 1
                 data = db_engine_spec.fetch_data(cursor, increased_limit)
-                if query.limit is None or len(data) <= query.limit:
+                if not query.limit or len(data) <= query.limit:
                     query.limiting_factor = LimitingFactor.NOT_LIMITED
                 else:
                     # return 1 row less than increased_query

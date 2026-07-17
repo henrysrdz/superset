@@ -366,3 +366,154 @@ def test_get_predicates_for_table_excludes_self(mocker: MockerFixture) -> None:
     filter_call = db.session.query().filter.call_args
     and_clause = filter_call.args[0]
     assert len(and_clause.clauses) == 5
+
+
+def test_execute_query_with_zero_limit(mocker: MockerFixture, app: None) -> None:
+    query = mocker.MagicMock()
+    query.executed_sql = "SELECT 42 AS answer"
+    query.limit = 0  # Unlimited query limit
+
+    database = query.database
+    database.allow_dml = False
+    db_engine_spec = database.db_engine_spec
+    db_engine_spec.fetch_data.return_value = [(42,)]
+
+    cursor = mocker.MagicMock()
+    mocker.patch("superset.sql_lab.SupersetResultSet")
+    mocker.patch("superset.sql_lab.db.session.refresh", return_value=None)
+
+    execute_query(query, cursor=cursor, log_params={})
+
+    # Assert that fetch_data was called with None (unlimited)
+    # rather than query.limit + 1 (1)
+    db_engine_spec.fetch_data.assert_called_with(cursor, None)
+
+
+def test_set_query_limit_no_limit(mocker: MockerFixture) -> None:
+    from superset.commands.sql_lab.execute import ExecuteSqlCommand
+    from superset.sqllab.limiting_factor import LimitingFactor
+
+    # Set up mocks for ExecuteSqlCommand components
+    execution_context = mocker.MagicMock()
+    execution_context.limit = 0  # Represents "No limit" or SQL_MAX_ROW = None
+    database = mocker.MagicMock()
+    db_engine_spec = mocker.MagicMock()
+    # No LIMIT clause in the query
+    db_engine_spec.get_limit_from_sql.return_value = None
+    database.db_engine_spec = db_engine_spec
+    execution_context.database = database
+
+    query = mocker.MagicMock()
+    execution_context.query = query
+
+    command = ExecuteSqlCommand(
+        execution_context=execution_context,
+        query_dao=mocker.MagicMock(),
+        database_dao=mocker.MagicMock(),
+        access_validator=mocker.MagicMock(),
+        sql_query_render=mocker.MagicMock(),
+        sql_json_executor=mocker.MagicMock(),
+        execution_context_convertor=mocker.MagicMock(),
+        sqllab_ctas_no_limit_flag=False,
+    )
+
+    command._set_query_limit("SELECT * FROM t")
+
+    assert query.limit is None
+    assert query.limiting_factor == LimitingFactor.NOT_LIMITED
+
+
+def test_set_query_limit_sql_only(mocker: MockerFixture) -> None:
+    from superset.commands.sql_lab.execute import ExecuteSqlCommand
+    from superset.sqllab.limiting_factor import LimitingFactor
+
+    execution_context = mocker.MagicMock()
+    execution_context.limit = 0  # No limit dropdown
+    database = mocker.MagicMock()
+    db_engine_spec = mocker.MagicMock()
+    db_engine_spec.get_limit_from_sql.return_value = 100  # LIMIT 100 in SQL
+    database.db_engine_spec = db_engine_spec
+    execution_context.database = database
+
+    query = mocker.MagicMock()
+    execution_context.query = query
+
+    command = ExecuteSqlCommand(
+        execution_context=execution_context,
+        query_dao=mocker.MagicMock(),
+        database_dao=mocker.MagicMock(),
+        access_validator=mocker.MagicMock(),
+        sql_query_render=mocker.MagicMock(),
+        sql_json_executor=mocker.MagicMock(),
+        execution_context_convertor=mocker.MagicMock(),
+        sqllab_ctas_no_limit_flag=False,
+    )
+
+    command._set_query_limit("SELECT * FROM t LIMIT 100")
+
+    assert query.limit == 100
+    assert query.limiting_factor == LimitingFactor.QUERY
+
+
+def test_set_query_limit_both_present(mocker: MockerFixture) -> None:
+    from superset.commands.sql_lab.execute import ExecuteSqlCommand
+    from superset.sqllab.limiting_factor import LimitingFactor
+
+    execution_context = mocker.MagicMock()
+    execution_context.limit = 1000  # dropdown is 1000
+    database = mocker.MagicMock()
+    db_engine_spec = mocker.MagicMock()
+    db_engine_spec.get_limit_from_sql.return_value = 100  # LIMIT 100 in SQL
+    database.db_engine_spec = db_engine_spec
+    execution_context.database = database
+
+    query = mocker.MagicMock()
+    execution_context.query = query
+
+    command = ExecuteSqlCommand(
+        execution_context=execution_context,
+        query_dao=mocker.MagicMock(),
+        database_dao=mocker.MagicMock(),
+        access_validator=mocker.MagicMock(),
+        sql_query_render=mocker.MagicMock(),
+        sql_json_executor=mocker.MagicMock(),
+        execution_context_convertor=mocker.MagicMock(),
+        sqllab_ctas_no_limit_flag=False,
+    )
+
+    command._set_query_limit("SELECT * FROM t LIMIT 100")
+
+    assert query.limit == 100
+    assert query.limiting_factor == LimitingFactor.QUERY
+
+
+def test_set_query_limit_dropdown_tighter(mocker: MockerFixture) -> None:
+    from superset.commands.sql_lab.execute import ExecuteSqlCommand
+    from superset.sqllab.limiting_factor import LimitingFactor
+
+    execution_context = mocker.MagicMock()
+    execution_context.limit = 50  # dropdown is 50
+    database = mocker.MagicMock()
+    db_engine_spec = mocker.MagicMock()
+    db_engine_spec.get_limit_from_sql.return_value = 100  # LIMIT 100 in SQL
+    database.db_engine_spec = db_engine_spec
+    execution_context.database = database
+
+    query = mocker.MagicMock()
+    execution_context.query = query
+
+    command = ExecuteSqlCommand(
+        execution_context=execution_context,
+        query_dao=mocker.MagicMock(),
+        database_dao=mocker.MagicMock(),
+        access_validator=mocker.MagicMock(),
+        sql_query_render=mocker.MagicMock(),
+        sql_json_executor=mocker.MagicMock(),
+        execution_context_convertor=mocker.MagicMock(),
+        sqllab_ctas_no_limit_flag=False,
+    )
+
+    command._set_query_limit("SELECT * FROM t LIMIT 100")
+
+    assert query.limit == 50
+    assert query.limiting_factor == LimitingFactor.DROPDOWN

@@ -19,15 +19,16 @@
 
 set -e
 
+# Extract "current" Python version from CI config (single source of truth)
+PYTHON_VERSION=$(grep -A 1 'if.*"current"' .github/actions/setup-backend/action.yml | grep 'RESOLVED_VERSION=' | sed 's/.*RESOLVED_VERSION="\([0-9.]*\)".*/\1/')
+
+if [ -z "$PYTHON_VERSION" ]; then
+  echo "Failed to determine Python version from .github/actions/setup-backend/action.yml" >&2
+  exit 1
+fi
+
 # If not already running in Docker, run this script inside Docker
 if [ -z "$RUNNING_IN_DOCKER" ]; then
-  # Extract "current" Python version from CI config (single source of truth)
-  PYTHON_VERSION=$(grep -A 1 'if.*"current"' .github/actions/setup-backend/action.yml | grep 'RESOLVED_VERSION=' | sed 's/.*RESOLVED_VERSION="\([0-9.]*\)".*/\1/')
-
-  if [ -z "$PYTHON_VERSION" ]; then
-    echo "Failed to determine Python version from .github/actions/setup-backend/action.yml" >&2
-    exit 1
-  fi
 
   echo "Running in Docker (Python ${PYTHON_VERSION} on Linux)..."
 
@@ -65,16 +66,16 @@ fi
 ADDITIONAL_ARGS="$@"
 
 # Generate the requirements/base.txt file
-uv pip compile pyproject.toml requirements/base.in -o requirements/base.txt $ADDITIONAL_ARGS
+uv pip compile pyproject.toml requirements/base.in -o requirements/base.txt --python-platform linux --python-version "$PYTHON_VERSION" $ADDITIONAL_ARGS
 
 # Hack to remove "Unnamed requirements are not allowed as constraints" error from base requirements
 grep --invert-match "./superset-core" requirements/base.txt > requirements/base-constraint.txt
 
 # Generate the requirements/development.txt file, making sure the base requirements are used as a constraint to keep the versions in sync. Note that `development.txt` is a Superset of `base.txt` where version for the shared libs should match their version.
-uv pip compile requirements/development.in -c requirements/base-constraint.txt -o requirements/development.txt $ADDITIONAL_ARGS
+uv pip compile requirements/development.in -c requirements/base-constraint.txt -o requirements/development.txt --python-platform linux --python-version "$PYTHON_VERSION" $ADDITIONAL_ARGS
 
 # Remove temporary base requirement file
 rm requirements/base-constraint.txt
 
 # NOTE translation is intended as a "supplemental" set of pins that can be combined with either base or dev as needed
-uv pip compile requirements/translations.in -o requirements/translations.txt $ADDITIONAL_ARGS
+uv pip compile requirements/translations.in -o requirements/translations.txt --python-platform linux --python-version "$PYTHON_VERSION" $ADDITIONAL_ARGS

@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 class SqlAnywhereEngineSpec(BaseEngineSpec):
     """Engine spec for SAP SQL Anywhere"""
 
-    engine = "sqlany"
+    engine = "sqlalchemy_sqlany"
     engine_name = "SAP SQL Anywhere"
-    default_driver = "sqlanydb"
+    default_driver = ""
 
     metadata = {
         "description": (
@@ -43,7 +43,7 @@ class SqlAnywhereEngineSpec(BaseEngineSpec):
             DatabaseCategory.PROPRIETARY,
         ],
         "pypi_packages": ["sqlalchemy-sqlany", "sqlanydb"],
-        "connection_string": "sqlany+sqlanydb://{username}:{password}@{host}:{port}/{database}",
+        "connection_string": "sqlalchemy_sqlany://{username}:{password}@{host}:{port}/{database}",
         "parameters": {
             "username": "Database username",
             "password": "Database password",

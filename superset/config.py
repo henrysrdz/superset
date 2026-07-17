@@ -1538,7 +1538,7 @@ QUERY_LOGGER = None
 MAPBOX_API_KEY = os.environ.get("MAPBOX_API_KEY", "")
 
 # Maximum number of rows returned for any analytical database query
-SQL_MAX_ROW = 100000
+SQL_MAX_ROW = None
 
 # Maximum number of forecast periods accepted by the Prophet post-processing
 # operation. Bounds resource usage when predicting into the future.

@@ -35,6 +35,9 @@ export function convertToNumWithSpaces(num: number) {
 }
 
 export function convertToShortNum(num: number) {
+  if (!num) {
+    return t('No limit');
+  }
   if (num < 1000) {
     return num;
   }
@@ -53,18 +56,25 @@ function renderQueryLimit(
 ) {
   const limitDropdown = [];
 
-  // Construct limit dropdown as increasing powers of ten until we reach SQL_MAX_ROW
-  for (let i = 10; i < maxRow; i *= 10) {
-    limitDropdown.push(i);
+  if (maxRow) {
+    // Construct limit dropdown as increasing powers of ten until we reach SQL_MAX_ROW
+    for (let i = 10; i < maxRow; i *= 10) {
+      limitDropdown.push(i);
+    }
+    limitDropdown.push(maxRow);
+  } else {
+    // Fallback: SQL_MAX_ROW is not set (no limit)
+    limitDropdown.push(10, 100, 1000, 10000, 100000, 1000000);
+    // Also include a 0 option for "No limit"
+    limitDropdown.push(0);
   }
-  limitDropdown.push(maxRow);
 
   return (
     <Menu
       items={[...new Set(limitDropdown)].map(limit => ({
         key: `${limit}`,
         onClick: () => setQueryLimit(limit),
-        label: `${convertToNumWithSpaces(limit)} `,
+        label: limit === 0 ? t('No limit') : `${convertToNumWithSpaces(limit)} `,
       }))}
     />
   );

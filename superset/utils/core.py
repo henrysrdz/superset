@@ -2115,6 +2115,8 @@ def apply_max_row_limit(
         if server_pagination
         else app.config["SQL_MAX_ROW"]
     )
+    if max_limit is None:
+        return limit
     if limit != 0:
         return min(max_limit, limit)
     return max_limit
